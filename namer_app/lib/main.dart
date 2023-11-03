@@ -189,6 +189,12 @@ class FavoritesPage extends StatelessWidget {
     var appState = context.watch<MyAppState>();
     var favorites = appState.favorites;
 
+    if (appState.favorites.isEmpty) {
+      return Center(
+        child: Text('No favorites yet.'),
+      );
+    }
+
     return ListView(
       children: favorites.map((e) => ListTile(
         title: Text(e.asLowerCase),
