@@ -27,18 +27,51 @@ class Document {
   }
 }
 
-class Block {
-  final String type;
-  final String text;
-  Block(this.type, this.text);
+sealed class Block {
+  Block();
 
   factory Block.fromJson(Map<String, dynamic> json) {
-    if (json case {'type': final type, 'text': final text}) {
-      return Block(type, text);
-    } else {
-      throw const FormatException('Unexpected JSON format');
-    }
+    return switch (json) {
+      {'type': 'h1', 'text': String text} => HeaderBlock(text),
+      {'type': 'p', 'text': String text} => ParagraphBlock(text),
+      {'type': 'checkbox', 'text': String text, 'checked': bool checked} =>
+          CheckboxBlock(text, checked),
+      _ => throw const FormatException('Unexpected JSON format'),
+    };
   }
+}
+
+class HeaderBlock extends Block {
+  final String text;
+  HeaderBlock(this.text);
+}
+
+class ParagraphBlock extends Block {
+  final String text;
+  ParagraphBlock(this.text);
+}
+
+class CheckboxBlock extends Block {
+  final String text;
+  final bool isChecked;
+  CheckboxBlock(this.text, this.isChecked);
+}
+
+String formatDate(DateTime dateTime) {
+  final today = DateTime.now();
+  final difference = dateTime.difference(today);
+
+  return switch (difference) {
+    Duration(inDays: 0) => 'today',
+    Duration(inDays: 1) => 'tomorrow',
+    Duration(inDays: -1) => 'yesterday',
+    Duration(inDays: final days) when days > 7 => '${days ~/ 7} weeks from now',
+    Duration(inDays: final days) when days < -7 =>
+    '${days.abs() ~/ 7} weeks ago',
+    Duration(inDays: final days, isNegative: true) => '${days
+        .abs()} days ago',
+    Duration(inDays: final days) => '$days days from now',
+  };
 }
 
 const documentJson = '''
