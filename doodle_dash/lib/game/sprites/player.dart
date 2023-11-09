@@ -41,7 +41,7 @@ class Player extends SpriteGroupComponent<PlayerState>
   bool get isMovingDown => _velocity.y > 0;
   Character character;
   double jumpSpeed;
-  final double _gravity = 9 * 3;
+  final double _gravity = 9;
 
   @override
   Future<void> onLoad() async {
