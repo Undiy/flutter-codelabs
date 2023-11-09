@@ -40,7 +40,9 @@ class DoodleDash extends FlameGame
   void update(double dt) {
     super.update(dt);
 
-    // Losing the game: Add isGameOver check
+    if (gameManager.isGameOver) {
+      return;
+    }
 
     if (gameManager.isIntro) {
       overlays.add('mainMenuOverlay');
@@ -67,8 +69,13 @@ class DoodleDash extends FlameGame
         camera.followComponent(player);
       }
 
-      // Losing the game: Add the first loss condition.
-      // Game over if Dash falls off screen!
+      if (player.position.y >
+          camera.position.y +
+              _world.size.y +
+              player.size.y +
+              screenBufferSpace) {
+        onLose();
+      }
     }
   }
 
@@ -121,7 +128,11 @@ class DoodleDash extends FlameGame
     overlays.remove('mainMenuOverlay');
   }
 
-  // Losing the game: Add an onLose method
+  void onLose() {
+    gameManager.state = GameState.gameOver;
+    player.removeFromParent();
+    overlays.add('gameOverOverlay');
+  }
 
   void resetGame() {
     startGame();
