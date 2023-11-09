@@ -36,15 +36,15 @@ class Player extends SpriteGroupComponent<PlayerState>
           priority: 1,
         );
 
-  int _hAxisInput = 0;
-  final int movingLeftInput = -1;
-  final int movingRightInput = 1;
+  double _hAxisInput = 0;
+  static const double movingLeftInput = -1;
+  static const double movingRightInput = 1;
   Vector2 _velocity = Vector2.zero();
   bool get isMovingDown => _velocity.y > 0;
   Character character;
   double jumpSpeed;
   final double _gravity = 9;
-  StreamSubscription<AccelerometerEvent>? accelerometerEventSub;
+  StreamSubscription<AccelerometerEvent>? accelerometerMovementSub;
 
   @override
   Future<void> onLoad() async {
@@ -63,10 +63,12 @@ class Player extends SpriteGroupComponent<PlayerState>
   @override
   void update(double dt) {
     if (gameRef.gameManager.isIntro || gameRef.gameManager.isGameOver) {
-      accelerometerEventSub?.cancel();
-      accelerometerEventSub = null;
+      accelerometerMovementSub?.cancel();
+      accelerometerMovementSub = null;
       return;
     }
+
+    print('update, _hAxisInput: $_hAxisInput');
 
     _velocity.x = _hAxisInput * jumpSpeed;
 
@@ -105,18 +107,16 @@ class Player extends SpriteGroupComponent<PlayerState>
     return true;
   }
 
+  final double _accelerometerTriggerThreshold = 0.5;
+
   void _subscribeToAccelerometer() {
-    accelerometerEventSub = accelerometerEvents.listen(
-          (AccelerometerEvent event) {
-
-            final triggerValue = 0.5;
-
-        if (event.x > triggerValue) {
-          moveLeft();
-        } else if (event.x < -triggerValue) {
-          moveRight();
-        } else {
+    accelerometerMovementSub = accelerometerEvents.listen(
+      (AccelerometerEvent event) {
+        if (event.x.abs() < _accelerometerTriggerThreshold) {
           resetDirection();
+        } else {
+          final value = -event.x.sign * (event.x.abs()) / 2;
+          ((value > 0) ? moveRight : moveLeft)(value: value);
         }
       },
       onError: (error) {
@@ -126,24 +126,24 @@ class Player extends SpriteGroupComponent<PlayerState>
     );
   }
 
-  void moveLeft() {
+  void moveLeft({double value = movingLeftInput}) {
     _hAxisInput = 0;
     if (isWearingHat) {
       current = PlayerState.nooglerLeft;
     } else if (!hasPowerup) {
       current = PlayerState.left;
     }
-    _hAxisInput += movingLeftInput;
+    _hAxisInput += value;
   }
 
-  void moveRight() {
+  void moveRight({double value = movingRightInput}) {
     _hAxisInput = 0;
     if (isWearingHat) {
       current = PlayerState.nooglerRight;
     } else if (!hasPowerup) {
       current = PlayerState.right;
     }
-    _hAxisInput += movingRightInput;
+    _hAxisInput += value;
   }
 
   void resetDirection() {
@@ -151,7 +151,7 @@ class Player extends SpriteGroupComponent<PlayerState>
   }
 
   bool get hasPowerup =>
-  current == PlayerState.rocket ||
+      current == PlayerState.rocket ||
       current == PlayerState.nooglerLeft ||
       current == PlayerState.nooglerRight ||
       current == PlayerState.nooglerCenter;
@@ -160,8 +160,8 @@ class Player extends SpriteGroupComponent<PlayerState>
 
   bool get isWearingHat =>
       current == PlayerState.nooglerLeft ||
-          current == PlayerState.nooglerRight ||
-          current == PlayerState.nooglerCenter;
+      current == PlayerState.nooglerRight ||
+      current == PlayerState.nooglerCenter;
 
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
