@@ -7,8 +7,10 @@ import 'dart:async';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/services.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 import '../doodle_dash.dart';
+import '../util/util.dart';
 import 'sprites.dart';
 // Core gameplay: Import sprites.dart
 
@@ -42,6 +44,7 @@ class Player extends SpriteGroupComponent<PlayerState>
   Character character;
   double jumpSpeed;
   final double _gravity = 9;
+  StreamSubscription<AccelerometerEvent>? accelerometerEventSub;
 
   @override
   Future<void> onLoad() async {
@@ -51,11 +54,19 @@ class Player extends SpriteGroupComponent<PlayerState>
 
     await _loadCharacterSprites();
     current = PlayerState.center;
+
+    if (isPlatformMobile) {
+      _subscribeToAccelerometer();
+    }
   }
 
   @override
   void update(double dt) {
-    if (gameRef.gameManager.isIntro || gameRef.gameManager.isGameOver) return;
+    if (gameRef.gameManager.isIntro || gameRef.gameManager.isGameOver) {
+      accelerometerEventSub?.cancel();
+      accelerometerEventSub = null;
+      return;
+    }
 
     _velocity.x = _hAxisInput * jumpSpeed;
 
@@ -92,6 +103,27 @@ class Player extends SpriteGroupComponent<PlayerState>
     }
 
     return true;
+  }
+
+  void _subscribeToAccelerometer() {
+    accelerometerEventSub = accelerometerEvents.listen(
+          (AccelerometerEvent event) {
+
+            final triggerValue = 0.5;
+
+        if (event.x > triggerValue) {
+          moveLeft();
+        } else if (event.x < -triggerValue) {
+          moveRight();
+        } else {
+          resetDirection();
+        }
+      },
+      onError: (error) {
+        print('userAccelerometer onError: $error');
+      },
+      cancelOnError: true,
+    );
   }
 
   void moveLeft() {

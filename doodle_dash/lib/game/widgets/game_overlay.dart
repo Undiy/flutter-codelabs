@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../doodle_dash.dart';
+import '../util/util.dart';
 import 'widgets.dart';
 
 class GameOverlay extends StatefulWidget {
@@ -22,7 +23,7 @@ class GameOverlay extends StatefulWidget {
 class GameOverlayState extends State<GameOverlay> {
   bool isPaused = false;
 
-  final bool isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+  final bool isMobile = !kIsWeb && isPlatformMobile;
 
   @override
   Widget build(BuildContext context) {

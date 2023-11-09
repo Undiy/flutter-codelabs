@@ -4,3 +4,4 @@
 
 export 'color_schemes.dart';
 export 'num_utils.dart';
+export 'platform_utils.dart';
